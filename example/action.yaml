@@ -46,4 +46,3 @@ runs:
       run: |
         chmod +x ${{ github.action_path }}/cleanup-workflow-runs.sh
         ${{ github.action_path }}/cleanup-workflow-runs.sh
-
