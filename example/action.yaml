@@ -1,5 +1,5 @@
-name: "github-actions-cleanup-workflow-runs"
-description: "GitHub action to cleanup workflow runs from a repository"
+name: "github-actions-cleanup-action-cache"
+description: "GitHub action to cleanup actions cache from a repository"
 branding:
   color: "green"
   icon: "book-open"
@@ -8,41 +8,52 @@ inputs:
     description: "Whether to run the action in dry-run mode <true|false>"
     type: string
     default: "true"
-    required: false
-  DELETE_OLDER_THAN:
-    description: "The age of deployments to delete (in days)"
+  CACHE_KEY:
+    description: "The specific cache key to delete"
     type: string
-    default: "7"
-    required: false
-  BRANCH_NAME:
-    description: "The branch name. Empty means all branches."
+    default: ""
+  GIT_REF:
+    description: "The git ref to delete the cache for"
     type: string
-    required: false
-  WORKFLOW_FILE:
-    description: "The workflow file name (e.g. workflow.yaml). Empty means all workflows."
-    type: string
-    required: false
-  REPO_NAME:
-    description: "The repository name (e.g. api)"
-    type: string
-    default: ${{ github.event.repository.name }}
-    required: false
+    default: ""
   GITHUB_TOKEN:
-    description: "GitHub token"
+    description: "The GitHub token to use for the API requests"
+    type: string
     required: true
 runs:
   using: "composite"
   steps:
-    - name: "Cleanup workflow runs"
+    - name: "Cleanup deployments"
       shell: bash
       env:
+        CACHE_KEY: ${{ inputs.CACHE_KEY }}
+        GIT_REF: ${{ inputs.GIT_REF }}
         DRY_RUN: ${{ inputs.DRY_RUN }}
-        DELETE_OLDER_THAN: ${{ inputs.DELETE_OLDER_THAN }}
-        BRANCH_NAME: ${{ inputs.BRANCH_NAME }}
-        WORKFLOW_FILE: ${{ inputs.WORKFLOW_FILE }}
-        OWNER: ${{ github.repository_owner }}
-        REPO: ${{ inputs.REPO_NAME }}
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
       run: |
-        chmod +x ${{ github.action_path }}/cleanup-workflow-runs.sh
-        ${{ github.action_path }}/cleanup-workflow-runs.sh
+        if [[ $CACHE_KEY != "" ]]; then
+          echo "Deleting cache for key: $CACHE_KEY"
+          if [[ $DRY_RUN == "false" ]]; then
+            echo "Deleting cache for key: $CACHE_KEY"
+            gh cache delete $CACHE_KEY
+          else
+            echo "Dry-run mode enabled, skipping cache deletion"
+          fi
+        elif [[ $GIT_REF != "" ]]; then
+          echo "Deleting cache for git ref: $GIT_REF"
+          cache_by_ref=$(gh cache list --ref $GIT_REF)
+          echo "Cache keys for git ref: $cache_by_ref"
+          IFS=$'\n'
+          for key in $cache_by_ref; do
+            cache_key=$(echo $key | awk {'print $2'})
+            if [[ $DRY_RUN == "false" ]]; then
+              echo "Deleting cache for key: $cache_key"
+              gh cache delete $cache_key
+            else
+              echo "Dry-run mode enabled, skipping cache deletion for key: $cache_key"
+            fi
+          done
+        else
+          echo "No cache key or git ref provided, skipping cache deletion"
+        fi
+     
