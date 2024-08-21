@@ -74,7 +74,7 @@ jobs:
         OUTPUT_FILE_NAME: ${{ matrix.paths }}/README.md
 ```
 
-# YAML multiline strings and pipes
+# Using YAML multiline strings and pipes
 
 If you're using pipes or multiline strings in your YAML inputs, check below a documentation-friendly example:
 
@@ -82,10 +82,10 @@ If you're using pipes or multiline strings in your YAML inputs, check below a do
 MY_INPUT:
     description: >-
       Use a folded block scalar with chomping indicator (i.e. `>-`) when defining your multiline YAML.<br>
-      Also use HTML breaking espaces as you can see at the end of each line here.<br>
+      Also use HTML breaking spaces as you can see at the end of each line here.<br>
       Whenever you have a pipe, please escape it with a backslash: (e.g:)`<this\|that>`.
     required: false
-    default: "calver,smart"
+    default: "my_input"
 ```
 
 # Local development
@@ -95,4 +95,3 @@ To develop locally, install requirements to ensure the .env file is used in the 
 ```
 pip3 install -r requirements.txt
 ```
-
